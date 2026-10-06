@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Review and sign</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="top"><h1 id="title">Review and sign</h1></header>
+  <main>
+    <section id="v-msg" hidden><div class="card"><h2 id="msg-title"></h2><p id="msg-body"></p></div></section>
+
+    <section id="v-sign" hidden>
+      <p id="intro" class="muted"></p>
+      <div class="pages" id="pages">Loading document…</div>
+
+      <div class="card" id="signbox" style="margin-top:18px">
+        <h2>Sign this document</h2>
+        <label for="name">Your full name</label>
+        <input id="name" type="text" maxlength="100" autocomplete="name">
+        <label>Your signature</label>
+        <div class="tabs"><button type="button" id="tab-draw" class="on">Draw</button><button type="button" id="tab-type">Type</button><button type="button" id="clear">Clear</button></div>
+        <input id="typed" type="text" placeholder="Type your name" hidden>
+        <canvas id="pad" class="pad"></canvas>
+        <label class="check"><input id="consent" type="checkbox">
+          <span>I agree to sign this document electronically, and that my electronic signature is as binding as a handwritten one. I have read the document above.</span></label>
+        <p class="error" id="err"></p>
+        <button class="primary" id="submit">Sign and submit</button>
+        <p class="muted" style="margin-bottom:0">The date is added automatically. A signed copy will be emailed to you.</p>
+      </div>
+      <button class="primary sticky-go" id="jump">Jump to signing ↓</button>
+    </section>
+
+    <section id="v-done" hidden>
+      <div class="card good">
+        <h2>Signed — thank you</h2>
+        <p id="done-msg"></p>
+        <a class="btn primary" id="dl" href="#">Download signed PDF</a>
+      </div>
+      <div class="pages" id="done-pages" style="margin-top:18px"></div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script type="module" src="/sign.js"></script>
+</body>
+</html>
