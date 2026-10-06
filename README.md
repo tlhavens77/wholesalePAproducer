@@ -2,10 +2,10 @@
 
 A small e-signature app that runs as a **Cloudflare Worker** from a **GitHub repository**.
 
-1. You log in, upload a purchase agreement (PDF or Word), and enter the recipient's name and email and the email where *your* signed copy should go.
-2. You click to place signature/date boxes on the pages. Your signature, printed name and today's date are stamped on automatically.
-3. The recipient gets an email with a private link, reviews the document, types their name, draws (or types) a signature and submits. Their date is stamped automatically.
-4. A signed PDF (with a Certificate of Completion page) is emailed to **you** and to the **recipient**, saved in R2 storage, and available to download from your dashboard or from the recipient's confirmation screen.
+1. You log in, upload a purchase agreement (PDF recommended, Word works), and enter the recipient's name and email (plus an optional second recipient) and the email where *your* signed copy should go.
+2. You click to place signature, date, printed-name and initials boxes on the pages. **Initials boxes go on every page at once.** Your signature, initials, printed name and today's date are stamped on automatically when you send.
+3. Each recipient gets their own email and private link, reviews the document, types their name, draws (or types) a signature and initials, and submits. Their date and printed name are stamped automatically. Signers can sign in any order.
+4. When the last person signs, the signed PDF (with a Certificate of Completion page) is emailed to **you** and to **every recipient**, saved in R2 storage, and available to download from your dashboard or from the recipients' confirmation screens. You get a short email each time someone signs before that.
 
 > Not legal advice. E-signatures are generally valid for contracts under the U.S. ESIGN Act and UETA, but real-estate documents can have state-specific rules (deeds and notarized documents usually need more). Check with your attorney or title company before relying on this for a closing.
 
@@ -52,12 +52,13 @@ Log in → **My signature**: enter your name, default email and draw (or type) y
 
 ## Things to know
 
-- **Word files** are converted to a simple PDF (text, bold, headings, tables flattened to rows, bullets). Fonts, images, headers/footers and exact layout are not preserved, and characters outside the standard Latin set (e.g. `≥`) become `?`. For a contract where layout matters, export a PDF from Word and upload that.
+- **Word files** are converted to a simple PDF (text, bold, headings, tables flattened to rows, bullets, check boxes as `[ ]` / `[X]`). Fonts, images, **headers and footers (including per-page initial lines)** and exact layout are not preserved, and characters outside the standard Latin set (e.g. `≥`) become `?`. For a real contract, fill in the blanks in Word, choose **Save as PDF**, and upload the PDF. Remove any yellow highlighting first if you don't want it printed.
 - **Fonts on generated pages** (signature page, certificate, Word conversion) are Helvetica. Calibri can't be embedded without a licensed font file. Your own PDF keeps its original fonts.
 - **Rotated PDF pages** are not handled specially; place boxes and check the result.
 - **PDF viewer** (pdf.js) loads from cdnjs.cloudflare.com in the browser. To self-host it, `npm install pdfjs-dist@3.11.174`, copy `build/pdf.min.js` and `build/pdf.worker.min.js` into `public/vendor/`, and update the script tag, `workerSrc` in `public/pdfview.js`, and the CSP in `src/index.js`.
 - **Signing links** are 64-character random tokens. Anyone with the link can sign, so the email says not to forward it. Use **Void** on the dashboard to kill a link.
 - **Audit trail**: each signed PDF ends with a Certificate of Completion (names, emails, timestamps, IP addresses, browser, consent, and a SHA-256 fingerprint of the document as sent).
 - **Local testing**: `npm install`, copy `.dev.vars.example` to `.dev.vars`, then `npm run dev`. With `DEV_NO_EMAIL=true` emails are logged instead of sent.
-- Not included yet: multiple recipients/signing order, initials, text-entry fields, a reminder schedule, and email-code verification of the signer.
-
+- **Initials** are drawn or typed once under *My signature* (yours) and on the signing page (recipients). If a document has no initials boxes, recipients aren't asked for initials.
+- **Two recipients**: both get a link; each sees and signs only their own boxes. Any signer's link can be copied from the dashboard if an email doesn't arrive.
+- Not included yet: fill-in text boxes and check boxes (fill those in Word before exporting to PDF), saved templates, forced signing order, a reminder schedule, and email-code verification of the signer.
