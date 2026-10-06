@@ -48,12 +48,25 @@ export function signRequestEmail({ ownerName, label, link, message }) {
   return { html, text };
 }
 
-export function signedCopyEmail({ audience, ownerName, recipientName, label, whenText }) {
-  const who = audience === 'owner' ? `${escapeHtml(recipientName)} has signed` : `Thank you for signing`;
+function joinNames(names) {
+  return names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+export function signedCopyEmail({ audience, ownerName, signerNames, label, whenText }) {
+  const who = audience === 'owner' ? `${escapeHtml(joinNames(signerNames))} signed` : 'Thank you for signing';
   const html = wrap(`
     <p>${who} <strong>${escapeHtml(label)}</strong>.</p>
-    <p>Signed ${escapeHtml(whenText)}. The fully signed PDF, including a certificate of completion, is attached.</p>
+    <p>Fully signed ${escapeHtml(whenText)}. The completed PDF, including a certificate of completion, is attached.</p>
     <p style="color:#666;font-size:13px">${audience === 'owner' ? '' : `Sent on behalf of ${escapeHtml(ownerName)}.`}</p>`);
-  const text = `${audience === 'owner' ? recipientName + ' has signed' : 'Thank you for signing'} ${label}.\nSigned ${whenText}. The signed PDF is attached.\n`;
+  const text = `${audience === 'owner' ? joinNames(signerNames) + ' signed' : 'Thank you for signing'} ${label}.\nFully signed ${whenText}. The completed PDF is attached.\n`;
+  return { html, text };
+}
+
+// Sent to the owner when one of two signers has signed and the other is still outstanding.
+export function signedProgressEmail({ signerName, label, waitingOn }) {
+  const html = wrap(`
+    <p><strong>${escapeHtml(signerName)}</strong> signed <strong>${escapeHtml(label)}</strong>.</p>
+    <p>Still waiting on ${escapeHtml(joinNames(waitingOn))}. When everyone has signed, the completed PDF will be emailed to you and to each signer.</p>`);
+  const text = `${signerName} signed ${label}.\nStill waiting on ${joinNames(waitingOn)}. The completed PDF will be emailed once everyone has signed.\n`;
   return { html, text };
 }

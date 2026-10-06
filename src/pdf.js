@@ -4,12 +4,16 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 // Default field sizes in PDF points. The placement UI uses the same numbers.
+// Recipient fields carry a `signer` number (0 = first recipient, 1 = second recipient).
 export const FIELD_TYPES = {
   sender_signature: { w: 190, h: 56 },
   sender_date: { w: 90, h: 18 },
+  sender_name: { w: 170, h: 18 },
+  sender_initials: { w: 44, h: 18 },
   recipient_signature: { w: 190, h: 56 },
   recipient_date: { w: 90, h: 18 },
   recipient_name: { w: 170, h: 18 },
+  recipient_initials: { w: 44, h: 18 },
 };
 
 const INK = rgb(0.07, 0.07, 0.1);
@@ -20,6 +24,8 @@ const CP1252_EXTRA = new Set([...'€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”
 export function clean(s) {
   return Array.from(String(s ?? ''), (ch) => {
     const cp = ch.codePointAt(0);
+    if (cp === 0x2610) return '[ ]'; // empty check box
+    if (cp === 0x2611 || cp === 0x2612) return '[X]'; // checked check box
     if ((cp >= 0x20 && cp <= 0x7e) || (cp >= 0xa0 && cp <= 0xff) || CP1252_EXTRA.has(cp)) return ch;
     if (cp === 9) return '    ';
     if (cp === 10 || cp === 13) return ' ';
@@ -65,12 +71,15 @@ export function wrapText(text, font, size, maxW) {
   return lines.length ? lines : [''];
 }
 
-// Draw the fields of one role ('sender' | 'recipient') onto the document.
-async function applyFields(doc, f, fields, role, d) {
+// Draw the fields of one party onto the document.
+// role is 'sender' or 'recipient'; for recipients, `signer` picks which recipient's fields to fill.
+async function applyFields(doc, f, fields, role, d, signer = null) {
   const pages = doc.getPages();
   const sigImg = d.signaturePng ? await doc.embedPng(d.signaturePng) : null;
+  const iniImg = d.initialsPng ? await doc.embedPng(d.initialsPng) : null;
   for (const field of fields) {
     if (!field.type.startsWith(`${role}_`)) continue;
+    if (signer !== null && (field.signer || 0) !== signer) continue;
     const page = pages[field.page];
     if (!page) continue;
     const { width: W, height: H } = page.getSize();
@@ -88,6 +97,11 @@ async function applyFields(doc, f, fields, role, d) {
       const ih = sigImg.height * scale;
       page.drawImage(sigImg, { x, y: y + nameH + (imgBoxH - ih) / 2, width: iw, height: ih });
       if (d.name) page.drawText(clean(d.name), { x, y: y + 1, size: nameSize, font: f.regular, color: GREY, maxWidth: w });
+    } else if (field.type.endsWith('_initials') && iniImg) {
+      const scale = Math.min(w / iniImg.width, h / iniImg.height);
+      const iw = iniImg.width * scale;
+      const ih = iniImg.height * scale;
+      page.drawImage(iniImg, { x: x + (w - iw) / 2, y: y + (h - ih) / 2, width: iw, height: ih });
     } else if (field.type.endsWith('_date') && d.dateText) {
       page.drawText(clean(d.dateText), { x, y: y + (h - 10) / 2 + 1, size: 10, font: f.regular, color: INK });
     } else if (field.type.endsWith('_name') && d.name) {
@@ -104,12 +118,14 @@ export async function stampSender(pdfBytes, fields, d) {
   return doc.save();
 }
 
-// Stamp the recipient's fields and append the certificate of completion.
-export async function finalizeSigned(sentBytes, fields, d, certificate) {
+// Stamp every recipient who has signed so far onto the "as sent" PDF.
+// `signers` = [{ index, signaturePng, initialsPng, name, dateText }]. Pass a certificate to append it
+// (done only once everybody has signed).
+export async function stampRecipients(sentBytes, fields, signers, certificate) {
   const doc = await loadPdf(sentBytes);
   const f = await fonts(doc);
-  await applyFields(doc, f, fields, 'recipient', d);
-  drawCertificate(doc, f, certificate);
+  for (const s of signers) await applyFields(doc, f, fields, 'recipient', s, s.index);
+  if (certificate) drawCertificate(doc, f, certificate);
   return doc.save();
 }
 
@@ -155,7 +171,8 @@ function drawCertificate(doc, f, cert) {
 }
 
 // Append a standard signature page and return default field positions for it.
-export async function appendSignaturePage(pdfBytes, { ownerName, recipientName, label }) {
+// `recipients` = [{ name }, ...] (one or two). Each party gets signature, date and printed-name boxes.
+export async function appendSignaturePage(pdfBytes, { ownerName, recipients, label }) {
   const doc = await loadPdf(pdfBytes);
   const f = await fonts(doc);
   const first = doc.getPage(0).getSize();
@@ -170,29 +187,24 @@ export async function appendSignaturePage(pdfBytes, { ownerName, recipientName, 
     page.drawText(line, { x: M, y: H - 124 - i * 14, size: 11, font: f.regular, color: GREY }));
 
   const fields = [];
-  const block = (top, party, role) => {
+  const fr = (x, yTop, w, h, type, signer) => ({
+    id: crypto.randomUUID(), type, page: pageIndex, x: x / W, y: yTop / H, w: w / W, h: h / H, ...(signer === undefined ? {} : { signer }),
+  });
+  const block = (top, party, role, signer) => {
     page.drawText(clean(party), { x: M, y: H - top + 22, size: 12, font: f.bold, color: INK });
-    // signature line + caption
     page.drawLine({ start: { x: M, y: H - (top + 58) }, end: { x: M + 190, y: H - (top + 58) }, thickness: 0.8, color: INK });
     page.drawText('Signature', { x: M, y: H - (top + 70), size: 8, font: f.regular, color: GREY });
-    // date line + caption
     page.drawLine({ start: { x: 340, y: H - (top + 58) }, end: { x: 430, y: H - (top + 58) }, thickness: 0.8, color: INK });
     page.drawText('Date', { x: 340, y: H - (top + 70), size: 8, font: f.regular, color: GREY });
-    // printed name line + caption
     page.drawLine({ start: { x: M, y: H - (top + 98) }, end: { x: M + 190, y: H - (top + 98) }, thickness: 0.8, color: INK });
     page.drawText('Printed name', { x: M, y: H - (top + 110), size: 8, font: f.regular, color: GREY });
-
-    const fr = (x, yTop, w, h, type) => ({ id: crypto.randomUUID(), type, page: pageIndex, x: x / W, y: yTop / H, w: w / W, h: h / H });
-    fields.push(fr(M, top, 190, 56, `${role}_signature`));
-    fields.push(fr(340, top + 38, 90, 18, `${role}_date`));
-    return top + 80; // top of the printed-name box
+    fields.push(fr(M, top, 190, 56, `${role}_signature`, signer));
+    fields.push(fr(340, top + 38, 90, 18, `${role}_date`, signer));
+    fields.push(fr(M, top + 80, 170, 18, `${role}_name`, signer));
   };
 
-  const senderNameTop = block(190, ownerName, 'sender');
-  page.drawText(clean(ownerName), { x: M, y: H - (senderNameTop + 13), size: 11, font: f.regular, color: INK });
-
-  const recipNameTop = block(420, recipientName, 'recipient');
-  fields.push({ id: crypto.randomUUID(), type: 'recipient_name', page: pageIndex, x: M / W, y: recipNameTop / H, w: 190 / W, h: 18 / H });
+  block(190, ownerName, 'sender');
+  recipients.forEach((r, i) => block(190 + 170 * (i + 1), r.name, 'recipient', i));
 
   return { bytes: await doc.save(), fields };
 }
