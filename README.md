@@ -60,3 +60,4 @@ Log in → **My signature**: enter your name, default email and draw (or type) y
 - **Audit trail**: each signed PDF ends with a Certificate of Completion (names, emails, timestamps, IP addresses, browser, consent, and a SHA-256 fingerprint of the document as sent).
 - **Local testing**: `npm install`, copy `.dev.vars.example` to `.dev.vars`, then `npm run dev`. With `DEV_NO_EMAIL=true` emails are logged instead of sent.
 - Not included yet: multiple recipients/signing order, initials, text-entry fields, a reminder schedule, and email-code verification of the signer.
+
