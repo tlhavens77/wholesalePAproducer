@@ -11,7 +11,7 @@
   },
   // Wrangler creates these on first deploy (KV + R2 auto-provisioning).
   // If your build complains, create them in the dashboard and add the id / name here.
-  "kv_namespaces": [{ "binding": "DB" }],
+  "kv_namespaces": [{ "binding": "DB", "id": "1c99479ba6d9475288feae93d068e393" }],
   "r2_buckets": [{ "binding": "FILES", "bucket_name": "contract-signer-files" }],
   "vars": {
     "APP_NAME": "Contract Signer",
