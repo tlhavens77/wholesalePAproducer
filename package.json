@@ -1,0 +1,17 @@
+{
+  "name": "contract-signer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Send a purchase agreement for e-signature, auto-stamp dates, email the signed PDF to both parties. Runs as a Cloudflare Worker.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

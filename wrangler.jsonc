@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "contract-signer",
+  "main": "src/index.js",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "run_worker_first": true
+  },
+  // Wrangler creates these on first deploy (KV + R2 auto-provisioning).
+  // If your build complains, create them in the dashboard and add the id / name here.
+  "kv_namespaces": [{ "binding": "DB" }],
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "contract-signer-files" }],
+  "vars": {
+    "APP_NAME": "Contract Signer",
+    // Must be an address on a domain you verified in Resend.
+    "FROM_EMAIL": "contracts@example.com",
+    // Time zone used for the date stamps placed on the contract.
+    "TIMEZONE": "America/Chicago"
+  },
+  "observability": { "enabled": true }
+}
