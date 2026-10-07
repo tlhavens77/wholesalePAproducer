@@ -84,6 +84,7 @@ async function route(request, env) {
   if (path === '/api/agreements' && method === 'GET') return listAgreements(env, request);
   if ((m = /^\/api\/agreements\/([a-f0-9-]{36})\/pdf$/.exec(path)) && method === 'GET') return agreementPdf(env, m[1], url.searchParams);
   if ((m = /^\/api\/agreements\/([a-f0-9-]{36})\/resend$/.exec(path)) && method === 'POST') return resend(request, env, m[1]);
+  if ((m = /^\/api\/agreements\/([a-f0-9-]{36})$/.exec(path)) && method === 'DELETE') return deleteAgreement(env, m[1]);
   if ((m = /^\/api\/agreements\/([a-f0-9-]{36})\/void$/.exec(path)) && method === 'POST') return voidAgreement(env, m[1]);
 
   return err('Not found', 404);
@@ -335,6 +336,18 @@ async function agreementPdf(env, id, params) {
   else obj = await env.FILES.get(`agreements/${id}/${kind}.pdf`);
   const suffix = kind === 'signed' ? 'Signed' : kind === 'latest' ? 'Current' : 'Original';
   return pdfResponse(obj, `${r.label} - ${suffix}`, params.get('download') === '1');
+}
+
+// Permanently removes an agreement: its record, signing links and every stored PDF.
+async function deleteAgreement(env, id) {
+  const r = await getJson(env, `agr:${id}`);
+  if (!r) return err('Not found', 404);
+  for (const x of r.recipients || []) if (x.token) await env.DB.delete(`tok:${x.token}`);
+  const names = ['original', 'sent', 'current', 'signed'].map((n) => `agreements/${id}/${n}.pdf`);
+  for (let i = 0; i < 2; i++) names.push(`agreements/${id}/signer-${i}.json`);
+  await env.FILES.delete(names);
+  await env.DB.delete(`agr:${id}`);
+  return json({ ok: true, message: 'Agreement deleted.' });
 }
 
 async function voidAgreement(env, id) {
