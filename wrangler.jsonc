@@ -16,7 +16,7 @@
   "vars": {
     "APP_NAME": "Contract Signer",
     // Must be an address on a domain you verified in Resend.
-    "FROM_EMAIL": "onboarding@resend.dev",
+    "FROM_EMAIL": "contracts@midamericaacquisitions.com",
     // Time zone used for the date stamps placed on the contract.
     "TIMEZONE": "America/Chicago"
   },
