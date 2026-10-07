@@ -122,3 +122,48 @@ export class SigPad {
     return out.toDataURL('image/png');
   }
 }
+
+// Builds a complete "Draw / Type / Clear" signature widget inside `container` and returns a small controller.
+// typedDefault() supplies text to pre-fill the Type tab (e.g. the person's name or initials).
+export function padWidget(container, { height = 150, typedDefault = () => '' } = {}) {
+  container.textContent = '';
+  const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; };
+  const tabs = mk('div', 'tabs');
+  const bDraw = mk('button', 'on', 'Draw');
+  const bType = mk('button', '', 'Type');
+  const bClear = mk('button', '', 'Clear');
+  for (const b of [bDraw, bType, bClear]) b.type = 'button';
+  tabs.append(bDraw, bType, bClear);
+  const typed = mk('input');
+  typed.type = 'text';
+  typed.placeholder = 'Type here';
+  typed.hidden = true;
+  const canvas = mk('canvas', 'pad');
+  canvas.style.height = `${height}px`;
+  container.append(tabs, typed, canvas);
+
+  const pad = new SigPad(canvas);
+  let typedMode = false;
+  const setMode = (t) => {
+    typedMode = t;
+    bDraw.classList.toggle('on', !t);
+    bType.classList.toggle('on', t);
+    typed.hidden = !t;
+    pad.resize();
+    if (t) {
+      if (!typed.value) typed.value = typedDefault();
+      pad.typed(typed.value);
+    }
+  };
+  bDraw.addEventListener('click', () => setMode(false));
+  bType.addEventListener('click', () => { setMode(true); typed.focus(); });
+  bClear.addEventListener('click', () => { pad.clear(); typed.value = ''; });
+  typed.addEventListener('input', () => pad.typed(typed.value));
+
+  return {
+    resize: () => { pad.resize(); if (typedMode) pad.typed(typed.value); },
+    reset: () => { typed.value = ''; setMode(false); pad.clear(); },
+    isEmpty: () => pad.isEmpty(),
+    toDataURL: () => pad.toDataURL(),
+  };
+}

@@ -22,9 +22,11 @@
         <label for="name">Your full name</label>
         <input id="name" type="text" maxlength="100" autocomplete="name">
         <label>Your signature</label>
-        <div class="tabs"><button type="button" id="tab-draw" class="on">Draw</button><button type="button" id="tab-type">Type</button><button type="button" id="clear">Clear</button></div>
-        <input id="typed" type="text" placeholder="Type your name" hidden>
-        <canvas id="pad" class="pad"></canvas>
+        <div id="sig"></div>
+        <div id="ini-wrap" hidden>
+          <label>Your initials <small>(placed on each page)</small></label>
+          <div id="ini"></div>
+        </div>
         <label class="check"><input id="consent" type="checkbox">
           <span>I agree to sign this document electronically, and that my electronic signature is as binding as a handwritten one. I have read the document above.</span></label>
         <p class="error" id="err"></p>
@@ -36,9 +38,9 @@
 
     <section id="v-done" hidden>
       <div class="card good">
-        <h2>Signed — thank you</h2>
+        <h2 id="done-title">Signed — thank you</h2>
         <p id="done-msg"></p>
-        <a class="btn primary" id="dl" href="#">Download signed PDF</a>
+        <a class="btn primary" id="dl" href="#" hidden>Download signed PDF</a>
       </div>
       <div class="pages" id="done-pages" style="margin-top:18px"></div>
     </section>

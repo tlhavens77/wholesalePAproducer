@@ -48,7 +48,7 @@ export async function renderPdf(container, url, maxWidth = 860) {
       transform: ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : null,
     }).promise;
 
-    pages.push({ index: i - 1, wrap, ptW: base.width, ptH: base.height });
+    pages.push({ index: i - 1, wrap, ptW: base.width, ptH: base.height, pdfPage: page });
   }
   return pages;
 }

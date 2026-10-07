@@ -39,7 +39,7 @@
       <div class="card" id="dash-card">
         <p class="muted" id="dash-empty" hidden>Nothing sent yet. Click “New agreement” to get started.</p>
         <table id="dash-table" hidden>
-          <thead><tr><th>Agreement</th><th>Recipient</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Agreement</th><th>Signers</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody id="dash-body"></tbody>
         </table>
       </div>
@@ -50,26 +50,41 @@
       <div id="step1">
         <h2>New agreement</h2>
         <form id="f-new" class="card">
-          <label for="file">Purchase agreement <small>(PDF or Word .docx, up to 20 MB)</small></label>
+          <label for="file">Purchase agreement <small>(PDF recommended; Word .docx also works, up to 20 MB)</small></label>
           <input id="file" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
+          <p class="notice" id="docx-hint" hidden>Word files lose their headers and footers (including initial lines) and some formatting when converted. For a contract, fill it in Word, choose <strong>Save as PDF</strong>, and upload the PDF instead.</p>
           <label for="label">Property address or title <small>(shown in the email and on the signed copy)</small></label>
           <input id="label" type="text" maxlength="150" required placeholder="123 Main St, City, ST">
+
           <div class="row">
             <div>
-              <label for="rname">Recipient name</label>
+              <label for="rname">Recipient 1 name</label>
               <input id="rname" type="text" maxlength="100" required>
             </div>
             <div>
-              <label for="remail">Recipient email</label>
+              <label for="remail">Recipient 1 email</label>
               <input id="remail" type="email" required>
             </div>
           </div>
+          <label class="check"><input id="two" type="checkbox">
+            <span>There is a second recipient who also signs<br><small class="muted">Each person gets their own signing link and signs their own boxes.</small></span></label>
+          <div class="row" id="r2box" hidden>
+            <div>
+              <label for="rname2">Recipient 2 name</label>
+              <input id="rname2" type="text" maxlength="100">
+            </div>
+            <div>
+              <label for="remail2">Recipient 2 email</label>
+              <input id="remail2" type="email">
+            </div>
+          </div>
+
           <label for="oemail">Send my signed copy to <small>(your email for this agreement)</small></label>
           <input id="oemail" type="email" required>
-          <label for="msg">Message to the recipient <small>(optional)</small></label>
+          <label for="msg">Message to the recipients <small>(optional)</small></label>
           <textarea id="msg" maxlength="1000"></textarea>
           <label class="check"><input id="addpage" type="checkbox">
-            <span>Add a signature page at the end<br><small class="muted">Use this if the agreement has no signature lines of its own.</small></span></label>
+            <span>Add a signature page at the end<br><small class="muted">Only if the agreement has no signature lines of its own.</small></span></label>
           <p class="error" id="new-err"></p>
           <button class="primary" type="submit" id="btn-prepare">Next: place signature boxes</button>
         </form>
@@ -77,15 +92,15 @@
 
       <div id="step2" hidden>
         <h2>Place signature boxes</h2>
-        <p class="muted">Pick a box type, then click on the page where it belongs. Drag boxes to adjust; use × to remove one. Dates are filled in automatically when each person signs.</p>
-        <div id="convnote" class="notice" hidden>Your Word file was converted to a simple PDF (text, bold and headings). Check every page below. For exact formatting, export a PDF from Word and upload that instead.</div>
-        <div class="toolbar" id="toolbar"></div>
+        <p class="muted"><strong>Your initials, signature, printed name and date, and both sellers’ boxes, are placed automatically</strong> on the initial and signature lines. Check them, drag any that are off, then send. To add one by hand, pick a box, then click on the page where it belongs. <strong>Initials boxes are placed on every page at once</strong>, in the same spot, so click the initial line on any page. Drag boxes to adjust; use × to remove one. Dates and printed names fill in automatically.</p>
+        <div id="convnote" class="notice" hidden>Your Word file was converted to a simple PDF. Headers, footers (including initial lines), fonts and images are not kept. Check every page, or go back and upload a PDF saved from Word.</div>
+        <div class="toolbar card" id="toolbar"></div>
         <div class="pages" id="pages"></div>
         <div class="card" style="margin-top:18px">
           <p id="sendsummary"></p>
           <p class="error" id="send-err"></p>
           <button id="btn-back">Back</button>
-          <button class="primary" id="btn-send">Send to recipient</button>
+          <button class="primary" id="btn-send">Send to recipients</button>
         </div>
       </div>
 
@@ -93,8 +108,8 @@
         <div class="card good">
           <h2>Sent</h2>
           <p id="sent-msg"></p>
-          <p class="muted">When they sign, the signed PDF is emailed to you and to them, and saved here under Agreements.</p>
-          <button id="btn-copylink">Copy signing link</button>
+          <div id="sent-links"></div>
+          <p class="muted">When everyone has signed, the completed PDF is emailed to you and to each signer, and saved here under Agreements.</p>
           <button class="primary" id="btn-done">Back to agreements</button>
         </div>
       </div>
@@ -103,16 +118,17 @@
     <!-- Settings -->
     <dialog id="dlg-settings">
       <h2 style="margin-top:0">My signature</h2>
-      <p class="muted">Your name and signature are placed automatically on every agreement you send.</p>
+      <p class="muted">Your name, signature and initials are placed automatically on every agreement you send.</p>
       <label for="s-name">Full name</label>
       <input id="s-name" type="text" maxlength="100">
       <label for="s-email">Default email for signed copies</label>
       <input id="s-email" type="email">
       <label>Signature</label>
-      <div id="s-current" hidden><img id="s-prev" class="sigprev" alt="Current signature"> <small class="muted">Current. Draw or type below to replace it.</small></div>
-      <div class="tabs"><button type="button" id="s-tab-draw" class="on">Draw</button><button type="button" id="s-tab-type">Type</button><button type="button" id="s-clear">Clear</button></div>
-      <input id="s-typed" type="text" placeholder="Type your name" hidden>
-      <canvas id="s-pad" class="pad"></canvas>
+      <div id="s-current" hidden><img id="s-prev" class="sigprev" alt="Current signature"> <small class="muted">Saved. Draw or type below only to replace it.</small></div>
+      <div id="s-sig"></div>
+      <label>Initials</label>
+      <div id="s-icurrent" hidden><img id="s-iprev" class="sigprev" alt="Current initials"> <small class="muted">Saved. Draw or type below only to replace them.</small></div>
+      <div id="s-ini"></div>
       <p class="error" id="s-err"></p>
       <button id="s-cancel" type="button">Cancel</button>
       <button id="s-save" type="button" class="primary">Save</button>

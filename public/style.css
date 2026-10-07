@@ -100,3 +100,24 @@ dialog::backdrop { background: rgba(20,30,45,.45); }
 .sticky-go { position: fixed; right: 16px; bottom: 16px; z-index: 30; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
 #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 18px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; max-width: 90vw; }
 #toast.show { opacity: 1; }
+
+/* ---- placement toolbar: one row per person ---- */
+:root { --recipient2: #2e7d32; }
+.toolbar.card { display: block; padding: 8px 12px; margin-bottom: 12px; top: 56px; }
+.tgroup { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 0; }
+.tgroup + .tgroup { border-top: 1px solid var(--line); }
+.tgroup .who { min-width: 90px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who.sender { color: var(--sender); }
+.who.recipient.s0 { color: var(--recipient); }
+.who.recipient.s1 { color: var(--recipient2); }
+.tool { padding: 5px 10px; font-size: 14px; }
+.tool.sender { border-color: var(--sender); color: var(--sender); }
+.tool.recipient.s0 { border-color: var(--recipient); color: var(--recipient); }
+.tool.recipient.s1 { border-color: var(--recipient2); color: var(--recipient2); }
+.tool.on { outline: 3px solid #f0a500; }
+.tool-clear { padding: 5px 8px; font-size: 13px; font-weight: 400; color: var(--muted); border-style: dashed; }
+.field.recipient.s1 { border-color: var(--recipient2); background-color: rgba(46,125,50,.14); color: var(--recipient2); }
+.field.recipient.s1.sign-here { animation-name: pulse2; }
+@keyframes pulse2 { 50% { background-color: rgba(46,125,50,.32); } }
+.ok { color: var(--ok); font-weight: 700; }
+.field { font-size: 10px; }
