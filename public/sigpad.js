@@ -17,7 +17,13 @@ export class SigPad {
     const up = () => { this.drawing = false; this.last = null; };
     canvas.addEventListener('pointerup', up);
     canvas.addEventListener('pointercancel', up);
-    canvas.addEventListener('pointerleave', up);
+    canvas.style.touchAction = 'none';
+    canvas.style.webkitUserSelect = 'none';
+    canvas.style.userSelect = 'none';
+    canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    // the canvas can be laid out after it is created (dialogs, tabs): re-fit while it is still blank
+    if (window.ResizeObserver) new ResizeObserver(() => { if (!this.dirty && this.c.clientWidth && Math.abs(this.c.width / (Math.max(window.devicePixelRatio || 1, 1)) - this.c.clientWidth) > 2) this.resize(); }).observe(canvas);
   }
 
   resize() {
@@ -41,7 +47,7 @@ export class SigPad {
 
   down(e) {
     e.preventDefault();
-    this.c.setPointerCapture(e.pointerId);
+    try { this.c.setPointerCapture(e.pointerId); } catch (err) { /* some browsers refuse; drawing still works */ }
     this.drawing = true;
     this.last = this.pos(e);
     // a dot for a simple tap
@@ -53,7 +59,7 @@ export class SigPad {
   }
 
   move(e) {
-    if (!this.drawing) return;
+    if (!this.drawing || !this.last) return;
     const p = this.pos(e);
     this.ctx.beginPath();
     this.ctx.moveTo(this.last.x, this.last.y);
