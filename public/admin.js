@@ -140,12 +140,21 @@ async function loadDash() {
     } else {
       actions.push(h('a', { class: 'btn', href: `${base}?kind=original`, target: '_blank', rel: 'noopener' }, 'Original'));
     }
+    actions.push(h('button', { class: 'danger', onclick: () => { if (confirm('Permanently delete this agreement and its PDFs? This cannot be undone.')) del(a.id); } }, 'Delete'));
     body.append(h('tr', {},
       h('td', {}, h('strong', {}, a.label), h('div', { class: 'muted' }, `Sent ${fmt(a.createdAt)}`)),
       h('td', {}, a.recipients.map((x) => h('div', {}, `${x.name} `, h('span', { class: x.signed ? 'ok' : 'muted' }, x.signed ? '✓ signed' : '· waiting'), h('div', { class: 'muted' }, x.email)))),
       h('td', {}, h('span', { class: `badge ${a.status}` }, statusText), ...a.emailErrors.map((m) => h('div', { class: 'error' }, m))),
       h('td', {}, h('div', { class: 'actions' }, actions))));
   }
+}
+
+async function del(id) {
+  try {
+    const r = await api(`/api/agreements/${id}`, { method: 'DELETE' });
+    toast(r.message || 'Deleted.');
+    await loadDash();
+  } catch (err) { toast(err.message); }
 }
 
 async function act(id, what) {
